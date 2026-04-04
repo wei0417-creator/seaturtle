@@ -256,10 +256,23 @@
     function showReward() { document.getElementById('reward-overlay').style.display = 'flex'; }
 
     function doTask(taskName, points) {
-        currentLv += points;
-        fetch(`${gasUrl}?action=update&id=${myId}&task=${encodeURIComponent(taskName)}`, { mode: 'no-cors' });
-        updateUI();
+    // 檢查 myId 是否存在，避免傳送空的 ID 給 GAS
+    if (!myId) {
+        console.error("錯誤：找不到海龜 ID");
+        return;
     }
+    
+    currentLv += points;
+    // 這裡的網址必須包含 &id=${myId}
+    const url = `${gasUrl}?action=update&id=${myId}&task=${encodeURIComponent(taskName)}`;
+    
+    fetch(url, { mode: 'no-cors' })
+    .then(() => {
+        console.log("資料同步成功：" + taskName);
+        updateUI();
+    })
+    .catch(err => console.error("同步失敗：", err));
+}
 
     function updateUI() {
         const video = document.getElementById('main-video');
