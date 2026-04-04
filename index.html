@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>望安守護者：海龜成長日記</title>
+    <style>
+        /* 1. 全域背景：建議放一張望安網垵口沙灘的美照 */
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            background-image: url('wangan_bg.jpg'); /* 記得上傳這張照片到 GitHub */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* 2. 毛玻璃質感卡片 */
+        .glass-card {
+            width: 90%;
+            max-width: 450px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        /* 3. 影片顯示區域 */
+        .video-container {
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 15px 0;
+            background: #000;
+            line-height: 0;
+        }
+
+        /* 4. 按鈕樣式 */
+        button {
+            background: linear-gradient(135deg, #00796b, #004d40);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 15px;
+            font-size: 16px;
+            margin: 8px 0;
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .diary-entry {
+            background: rgba(224, 242, 241, 0.6);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: left;
+            font-size: 14px;
+            margin-top: 15px;
+            border-left: 5px solid #00796b;
+        }
+
+        #game-ui { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="glass-card">
+    <h2 style="color: #004d40; margin-top: 0;">🐢 海龜守護日記</h2>
+
+    <div id="adopt-ui">
+        <p>在望安的沙灘上，你發現了一個蛋窩...<br>給即將出世的小龜一個名字吧：</p>
+        <input type="text" id="turtleName" placeholder="海龜的名字" style="width:80%; padding:10px; border-radius:10px; border:1px solid #ccc;"><br><br>
+        <button onclick="startAdoption()">守護這顆海龜蛋</button>
+    </div>
+
+    <div id="game-ui">
+        <div class="video-container">
+            <video id="main-video" width="100%" autoplay loop muted playsinline>
+                <source id="video-src" src="videos/egg_waiting.mp4" type="video/mp4">
+            </video>
+        </div>
+        
+        <h3 id="display-name" style="margin: 5px 0;"></h3>
+        <p id="display-status" style="font-size: 14px; color: #555;">狀態：孵化中...</p>
+
+        <div id="action-buttons">
+            <button onclick="doTask('巡視沙灘', 1)">🔦 完成沙灘巡視 (準備孵化)</button>
+            <button onclick="doTask('清理海廢', 1)">🚮 清理周邊垃圾 (準備孵化)</button>
+        </div>
+
+        <div class="diary-entry">
+            <strong>📖 守護日誌</strong><br>
+            <span id="diary-text">今天在望安巡視，希望小龜能平安出生。</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const gasUrl = "你的GAS網址";
+    let myId = "";
+    let currentLv = 0;
+
+    function startAdoption() {
+        const name = document.getElementById('turtleName').value;
+        if(!name) return alert("請輸入名字");
+        myId = "T" + new Date().getTime();
+
+        fetch(`${gasUrl}?action=adopt&name=${encodeURIComponent(name)}&species=海龜蛋`, { mode: 'no-cors' })
+        .then(() => {
+            document.getElementById('display-name').innerText = name + " 的成長紀錄";
+            document.getElementById('adopt-ui').style.display = 'none';
+            document.getElementById('game-ui').style.display = 'block';
+        });
+    }
+
+    function doTask(taskName, points) {
+        currentLv += points;
+        fetch(`${gasUrl}?action=update&id=${myId}&task=${encodeURIComponent(taskName)}`, { mode: 'no-cors' })
+        .then(() => {
+            updateUI();
+            alert("任務完成：" + taskName);
+        });
+    }
+
+    function updateUI() {
+        const video = document.getElementById('main-video');
+        const source = document.getElementById('video-src');
+        const status = document.getElementById('display-status');
+        const diary = document.getElementById('diary-text');
+        const btnArea = document.getElementById('action-buttons');
+
+        if (currentLv >= 2 && currentLv < 5) {
+            source.src = "videos/egg_hatch.mp4";
+            status.innerText = "狀態：剛破殼的幼龜";
+            diary.innerText = "太棒了！小龜順利破殼而出，努力游向大海了！";
+            btnArea.innerHTML = '<button onclick="doTask(\'划水運動\', 1)">💪 體能挑戰：模擬划水 (成長中)</button>';
+        } else if (currentLv >= 5) {
+            source.src = "videos/sea_swimming.mp4";
+            status.innerText = "狀態：在海洋中茁壯";
+            diary.innerText = "小龜已經在大海裡自由自在地生活，期待牠長大回來。";
+            btnArea.innerHTML = '<p>今日任務已達成，明天再來寫日記吧！</p>';
+        }
+        video.load();
+    }
+</script>
+
+</body>
+</html>
