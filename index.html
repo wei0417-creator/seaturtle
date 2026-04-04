@@ -91,7 +91,7 @@
     <div id="game-ui">
         <div class="video-container">
             <video id="main-video" width="100%" autoplay loop muted playsinline>
-                <source id="video-src" src="videosegg_waiting.mp4" type="video/mp4">
+                <source id="video-src" src="egg_waiting.mp4" type="video/mp4">
             </video>
         </div>
         <h3 id="display-name" style="margin: 5px 0;"></h3>
@@ -123,13 +123,13 @@
         <h2 style="color: #d32f2f;">🎁 守護者大抽獎</h2>
         <p>恭喜完成 8 題挑戰！<br>現在請按下按鈕抽取你的禮物：</p>
         <div id="lottery-result">？？？</div>
-        <button id="draw-btn" onclick="startDraw()" style="background: #d32f2f;">開始抽獎</button>
+        <button id="draw-btn" onclick="startDraw()">開始抽獎</button>
         <div id="redeem-hint" style="display:none;">
             <p style="font-size: 14px; color: #555; margin-top: 10px;">
                 請將此畫面出示給服務台人員兌換<br>
                 <span style="color:#d32f2f; font-weight:bold;">(每個帳號限領一次)</span>
             </p>
-            <p style="font-size: 12px; color: #999;">正在儲存結果，請稍候...</p>
+            <p style="font-size: 12px; color: #999;">正在儲存結果...</p>
         </div>
     </div>
 </div>
@@ -161,12 +161,18 @@
     ];
 
     function startAdoption() {
+        const nameInput = document.getElementById('turtleName');
+        const name = nameInput.value;
+        if(!name) return alert("請輸入名字");
+        
+        // 先生成 ID 並保存
+        myId = "T" + new Date().getTime();
+
         const audio = document.getElementById('bg-music');
         if(audio) { audio.volume = 0.5; audio.play().catch(e => {}); }
-        const name = document.getElementById('turtleName').value;
-        if(!name) return alert("請輸入名字");
-        myId = "T" + new Date().getTime();
-        fetch(`${gasUrl}?action=adopt&name=${encodeURIComponent(name)}&species=海龜蛋`, { mode: 'no-cors' })
+
+        // 傳送 ID 與認養訊息
+        fetch(`${gasUrl}?action=adopt&id=${myId}&name=${encodeURIComponent(name)}&species=海龜蛋`, { mode: 'no-cors' })
         .then(() => {
             document.getElementById('display-name').innerText = name + " 的日記";
             document.getElementById('adopt-ui').style.display = 'none';
@@ -209,19 +215,17 @@
         }
     }
 
-function startDraw() {
+    function startDraw() {
         const resultDiv = document.getElementById('lottery-result');
         const drawBtn = document.getElementById('draw-btn');
         const redeemHint = document.getElementById('redeem-hint');
         
-        // 防止重複點擊
         drawBtn.disabled = true;
         drawBtn.innerText = "抽取中...";
         resultDiv.classList.add('rolling');
 
         let count = 0;
         let timer = setInterval(() => {
-            // 隨機跳動顯示獎項
             resultDiv.innerText = prizes[Math.floor(Math.random() * prizes.length)];
             count++;
 
@@ -229,37 +233,26 @@ function startDraw() {
                 clearInterval(timer);
                 resultDiv.classList.remove('rolling');
                 
-                // 1. 決定最終獎項
                 const finalPrize = prizes[Math.floor(Math.random() * prizes.length)];
-                
-                // 2. 顯示結果給遊客看
                 resultDiv.innerText = "🎉 " + finalPrize + " 🎉";
                 drawBtn.style.display = "none";
                 redeemHint.style.display = "block";
                 
-                // 3. 【最重要的步驟】強制將獎項傳送給 GAS 記錄到試算表
-                // 我們明確傳送 "抽中獎項:獎品名稱"
                 if (myId) {
                     const prizeTaskName = "抽中獎項:" + finalPrize;
                     const finalUrl = `${gasUrl}?action=update&id=${myId}&task=${encodeURIComponent(prizeTaskName)}`;
                     
-                    // 使用 fetch 直接發送，不依賴 doTask 以確保穩定
                     fetch(finalUrl, { mode: 'no-cors' })
                     .then(() => {
-                        console.log("獎項已成功紀錄至雲端：" + finalPrize);
-                        
-                        // 4. 成功紀錄後，延遲 4 秒再跳轉結語，讓遊客有時間看清楚獎項
+                        console.log("獎項已同步：" + finalPrize);
                         setTimeout(() => {
                             document.getElementById('reward-overlay').style.display = 'none';
                             showFinalEnding();
                         }, 4000);
                     })
-                    .catch(err => {
-                        console.error("紀錄失敗，請手動截圖！", err);
-                        alert("網路連線不穩，請務必截圖此畫面以利兌換！");
+                    .catch(e => {
+                        alert("紀錄同步失敗，請務必截圖此畫面兌換！");
                     });
-                } else {
-                    alert("找不到您的海龜 ID，請截圖此畫面由工作人員人工確認。");
                 }
             }
         }, 100);
@@ -271,33 +264,16 @@ function startDraw() {
         const btnArea = document.getElementById('action-buttons');
         
         status.innerText = "狀態：守護任務達成";
-        diary.innerHTML = "<strong>恭喜你完成守護之旅！</strong><br>這隻小龜因為你的守護，已經帶著你的祝福回到大海。請記得向服務台出示抽獎結果領取獎勵喔！";
-        
-        // 隱藏任務按鈕，顯示感謝訊息
+        diary.innerHTML = "<strong>恭喜你完成守護之旅！</strong><br>這隻小龜因為你的守護，已經帶著祝福回到大海。請出示抽獎結果領取獎勵！";
         btnArea.innerHTML = "<h3 style='color:#00796b;'>🌊 守護者，我們大海見！</h3>";
     }
 
-    function closeQuiz() { document.getElementById('quiz-overlay').style.display = 'none'; }
-    function showReward() { document.getElementById('reward-overlay').style.display = 'flex'; }
-
     function doTask(taskName, points) {
-    // 檢查 myId 是否存在，避免傳送空的 ID 給 GAS
-    if (!myId) {
-        console.error("錯誤：找不到海龜 ID");
-        return;
+        if (!myId) return;
+        currentLv += points;
+        const url = `${gasUrl}?action=update&id=${myId}&task=${encodeURIComponent(taskName)}`;
+        fetch(url, { mode: 'no-cors' }).then(() => updateUI());
     }
-    
-    currentLv += points;
-    // 這裡的網址必須包含 &id=${myId}
-    const url = `${gasUrl}?action=update&id=${myId}&task=${encodeURIComponent(taskName)}`;
-    
-    fetch(url, { mode: 'no-cors' })
-    .then(() => {
-        console.log("資料同步成功：" + taskName);
-        updateUI();
-    })
-    .catch(err => console.error("同步失敗：", err));
-}
 
     function updateUI() {
         const video = document.getElementById('main-video');
@@ -306,21 +282,24 @@ function startDraw() {
         const diary = document.getElementById('diary-text');
 
         if (currentLv >= 2 && currentLv < 8) {
-            if(!source.src.includes("videosegg_hatch.mp4.mp4")) {
-                source.src = "videosegg_hatch_mp4.mp4";
+            if(!source.src.includes("egg_hatch.mp4")) {
+                source.src = "egg_hatch.mp4";
                 status.innerText = "狀態：剛破殼的幼龜";
                 diary.innerText = "太棒了！小龜順利破殼，正努力游向大海！";
                 video.load(); video.play();
             }
         } else if (currentLv >= 8) {
-            if(!source.src.includes("videossea_swimming.mp4")) {
+            if(!source.src.includes("sea_swimming.mp4")) {
                 source.src = "sea_swimming.mp4";
                 status.innerText = "狀態：在海洋中茁壯";
-                diary.innerText = "小龜已在大海成長。完成 8 題即可抽獎領取獎勵！";
+                diary.innerText = "小龜已在大海成長。完成挑戰即可領取獎勵！";
                 video.load(); video.play();
             }
         }
     }
+
+    function closeQuiz() { document.getElementById('quiz-overlay').style.display = 'none'; }
+    function showReward() { document.getElementById('reward-overlay').style.display = 'flex'; }
 </script>
 
 </body>
