@@ -54,7 +54,6 @@
             font-size: 14px; margin-top: 15px; border-left: 5px solid #00796b;
         }
 
-        /* 彈窗樣式 */
         #quiz-overlay, #reward-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); z-index: 1000;
@@ -66,7 +65,6 @@
             padding: 25px; border-radius: 25px; text-align: center;
         }
 
-        /* 抽獎文字滾動動畫 */
         #lottery-result {
             font-size: 24px; font-weight: bold; color: #d32f2f;
             margin: 20px 0; min-height: 40px;
@@ -93,7 +91,7 @@
     <div id="game-ui">
         <div class="video-container">
             <video id="main-video" width="100%" autoplay loop muted playsinline>
-                <source id="video-src" src="videoegg_waiting.mp4" type="video/mp4">
+                <source id="video-src" src="videosegg_waiting.mp4" type="video/mp4">
             </video>
         </div>
         <h3 id="display-name" style="margin: 5px 0;"></h3>
@@ -126,10 +124,13 @@
         <p>恭喜完成 8 題挑戰！<br>現在請按下按鈕抽取你的禮物：</p>
         <div id="lottery-result">？？？</div>
         <button id="draw-btn" onclick="startDraw()" style="background: #d32f2f;">開始抽獎</button>
-        <p id="redeem-hint" style="display:none; font-size: 14px; color: #555; margin-top: 10px;">
-            請將此畫面出示給服務台人員兌換<br>
-            <span style="color:#d32f2f; font-weight:bold;">(每個帳號限領一次)</span>
-        </p>
+        <div id="redeem-hint" style="display:none;">
+            <p style="font-size: 14px; color: #555; margin-top: 10px;">
+                請將此畫面出示給服務台人員兌換<br>
+                <span style="color:#d32f2f; font-weight:bold;">(每個帳號限領一次)</span>
+            </p>
+            <p style="font-size: 12px; color: #999;">正在儲存結果，請稍候...</p>
+        </div>
     </div>
 </div>
 
@@ -223,13 +224,32 @@
                 clearInterval(timer);
                 resultDiv.classList.remove('rolling');
                 const finalPrize = prizes[Math.floor(Math.random() * prizes.length)];
-                resultDiv.innerText = "🎊 " + finalPrize + " 🎊";
+                resultDiv.innerText = "🎉 " + finalPrize + " 🎉";
                 drawBtn.style.display = "none";
                 document.getElementById('redeem-hint').style.display = "block";
-                // 獎項同步回傳試算表
+                
+                // 獎項同步回傳試算表 (這會觸發 GAS 寫入備註欄)
                 doTask("抽中獎項: " + finalPrize, 0);
+
+                // 3.5秒後自動跳轉到最後結語畫面
+                setTimeout(() => {
+                    document.getElementById('reward-overlay').style.display = 'none';
+                    showFinalEnding();
+                }, 3500);
             }
         }, 100);
+    }
+
+    function showFinalEnding() {
+        const diary = document.getElementById('diary-text');
+        const status = document.getElementById('display-status');
+        const btnArea = document.getElementById('action-buttons');
+        
+        status.innerText = "狀態：守護任務達成";
+        diary.innerHTML = "<strong>恭喜你完成守護之旅！</strong><br>這隻小龜因為你的守護，已經帶著你的祝福回到大海。請記得向服務台出示抽獎結果領取獎勵喔！";
+        
+        // 隱藏任務按鈕，顯示感謝訊息
+        btnArea.innerHTML = "<h3 style='color:#00796b;'>🌊 守護者，我們大海見！</h3>";
     }
 
     function closeQuiz() { document.getElementById('quiz-overlay').style.display = 'none'; }
@@ -249,14 +269,14 @@
 
         if (currentLv >= 2 && currentLv < 8) {
             if(!source.src.includes("videosegg_hatch.mp4.mp4")) {
-                source.src = "videosegg_hatch.mp4.mp4";
+                source.src = "videosegg_hatch_mp4.mp4";
                 status.innerText = "狀態：剛破殼的幼龜";
                 diary.innerText = "太棒了！小龜順利破殼，正努力游向大海！";
                 video.load(); video.play();
             }
         } else if (currentLv >= 8) {
             if(!source.src.includes("videossea_swimming.mp4")) {
-                source.src = "videossea_swimming.mp4";
+                source.src = "sea_swimming.mp4";
                 status.innerText = "狀態：在海洋中茁壯";
                 diary.innerText = "小龜已在大海成長。完成 8 題即可抽獎領取獎勵！";
                 video.load(); video.play();
