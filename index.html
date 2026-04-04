@@ -209,33 +209,58 @@
         }
     }
 
-    function startDraw() {
+function startDraw() {
         const resultDiv = document.getElementById('lottery-result');
         const drawBtn = document.getElementById('draw-btn');
+        const redeemHint = document.getElementById('redeem-hint');
+        
+        // 防止重複點擊
         drawBtn.disabled = true;
         drawBtn.innerText = "抽取中...";
         resultDiv.classList.add('rolling');
 
         let count = 0;
         let timer = setInterval(() => {
+            // 隨機跳動顯示獎項
             resultDiv.innerText = prizes[Math.floor(Math.random() * prizes.length)];
             count++;
+
             if (count > 25) {
                 clearInterval(timer);
                 resultDiv.classList.remove('rolling');
+                
+                // 1. 決定最終獎項
                 const finalPrize = prizes[Math.floor(Math.random() * prizes.length)];
+                
+                // 2. 顯示結果給遊客看
                 resultDiv.innerText = "🎉 " + finalPrize + " 🎉";
                 drawBtn.style.display = "none";
-                document.getElementById('redeem-hint').style.display = "block";
+                redeemHint.style.display = "block";
                 
-                // 獎項同步回傳試算表 (這會觸發 GAS 寫入備註欄)
-                doTask("抽中獎項: " + finalPrize, 0);
-
-                // 3.5秒後自動跳轉到最後結語畫面
-                setTimeout(() => {
-                    document.getElementById('reward-overlay').style.display = 'none';
-                    showFinalEnding();
-                }, 3500);
+                // 3. 【最重要的步驟】強制將獎項傳送給 GAS 記錄到試算表
+                // 我們明確傳送 "抽中獎項:獎品名稱"
+                if (myId) {
+                    const prizeTaskName = "抽中獎項:" + finalPrize;
+                    const finalUrl = `${gasUrl}?action=update&id=${myId}&task=${encodeURIComponent(prizeTaskName)}`;
+                    
+                    // 使用 fetch 直接發送，不依賴 doTask 以確保穩定
+                    fetch(finalUrl, { mode: 'no-cors' })
+                    .then(() => {
+                        console.log("獎項已成功紀錄至雲端：" + finalPrize);
+                        
+                        // 4. 成功紀錄後，延遲 4 秒再跳轉結語，讓遊客有時間看清楚獎項
+                        setTimeout(() => {
+                            document.getElementById('reward-overlay').style.display = 'none';
+                            showFinalEnding();
+                        }, 4000);
+                    })
+                    .catch(err => {
+                        console.error("紀錄失敗，請手動截圖！", err);
+                        alert("網路連線不穩，請務必截圖此畫面以利兌換！");
+                    });
+                } else {
+                    alert("找不到您的海龜 ID，請截圖此畫面由工作人員人工確認。");
+                }
             }
         }, 100);
     }
