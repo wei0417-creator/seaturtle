@@ -110,6 +110,10 @@
     let currentLv = 0;
 
     function startAdoption() {
+        // 啟動背景音樂
+    const audio = document.getElementById('bg-music');
+    audio.volume = 0.5; // 設定音量為 50%
+    audio.play();
         const name = document.getElementById('turtleName').value;
         if(!name) return alert("請輸入名字");
         myId = "T" + new Date().getTime();
@@ -137,7 +141,9 @@
         const status = document.getElementById('display-status');
         const diary = document.getElementById('diary-text');
         const btnArea = document.getElementById('action-buttons');
-
+document.getElementById('adopt-ui').style.display = 'none';
+    document.getElementById('game-ui').style.display = 'block';
+}
         if (currentLv >= 2 && currentLv < 5) {
             source.src = "videosegg_hatch.mp4.mp4";
             status.innerText = "狀態：剛破殼的幼龜";
