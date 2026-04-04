@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>望安守護者：海龜成長日記</title>
     <style>
-        /* 1. 全域背景：建議放一張望安網垵口沙灘的美照 */
         body {
             font-family: 'Microsoft JhengHei', sans-serif;
-            background-image: url('wangan_bg.jpg'); /* 記得上傳這張照片到 GitHub */
+            background-image: url('wangan_bg.jpg'); 
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -17,12 +16,8 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            <audio id="bg-music" loop>
-    <source src="bgm.mp3" type="audio/mpeg">
-</audio>
         }
 
-        /* 2. 毛玻璃質感卡片 */
         .glass-card {
             width: 90%;
             max-width: 450px;
@@ -34,7 +29,6 @@
             text-align: center;
         }
 
-        /* 3. 影片顯示區域 */
         .video-container {
             width: 100%;
             border-radius: 20px;
@@ -44,7 +38,6 @@
             line-height: 0;
         }
 
-        /* 4. 按鈕樣式 */
         button {
             background: linear-gradient(135deg, #00796b, #004d40);
             color: white;
@@ -72,6 +65,10 @@
     </style>
 </head>
 <body>
+
+<audio id="bg-music" loop>
+    <source src="bgm.mp3" type="audio/mpeg">
+</audio>
 
 <div class="glass-card">
     <h2 style="color: #004d40; margin-top: 0;">🐢 海龜守護日記</h2>
@@ -105,15 +102,18 @@
 </div>
 
 <script>
-    const gasUrl = "你的GAS網址";
+    const gasUrl = "https://script.google.com/macros/s/你的ID/exec"; // 請確保這是正確的 GAS 網址
     let myId = "";
     let currentLv = 0;
 
     function startAdoption() {
         // 啟動背景音樂
-    const audio = document.getElementById('bg-music');
-    audio.volume = 0.5; // 設定音量為 50%
-    audio.play();
+        const audio = document.getElementById('bg-music');
+        if(audio) {
+            audio.volume = 0.5;
+            audio.play().catch(e => console.log("音樂播放被瀏覽器阻擋"));
+        }
+
         const name = document.getElementById('turtleName').value;
         if(!name) return alert("請輸入名字");
         myId = "T" + new Date().getTime();
@@ -123,6 +123,8 @@
             document.getElementById('display-name').innerText = name + " 的成長紀錄";
             document.getElementById('adopt-ui').style.display = 'none';
             document.getElementById('game-ui').style.display = 'block';
+            // 確保第一段影片開始播放
+            document.getElementById('main-video').play();
         });
     }
 
@@ -141,21 +143,23 @@
         const status = document.getElementById('display-status');
         const diary = document.getElementById('diary-text');
         const btnArea = document.getElementById('action-buttons');
-document.getElementById('adopt-ui').style.display = 'none';
-    document.getElementById('game-ui').style.display = 'block';
-}
+
+        // 判斷等級切換影片與文字
         if (currentLv >= 2 && currentLv < 5) {
             source.src = "videosegg_hatch.mp4.mp4";
             status.innerText = "狀態：剛破殼的幼龜";
             diary.innerText = "太棒了！小龜順利破殼而出，努力游向大海了！";
             btnArea.innerHTML = '<button onclick="doTask(\'划水運動\', 1)">💪 體能挑戰：模擬划水 (成長中)</button>';
+            video.load();
+            video.play();
         } else if (currentLv >= 5) {
             source.src = "videossea_swimming.mp4";
             status.innerText = "狀態：在海洋中茁壯";
             diary.innerText = "小龜已經在大海裡自由自在地生活，期待牠長大回來。";
             btnArea.innerHTML = '<p>今日任務已達成，明天再來寫日記吧！</p>';
+            video.load();
+            video.play();
         }
-        video.load();
     }
 </script>
 
