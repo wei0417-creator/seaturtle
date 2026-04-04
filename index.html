@@ -91,7 +91,7 @@
     <div id="game-ui">
         <div class="video-container">
             <video id="main-video" width="100%" autoplay loop muted playsinline>
-                <source id="video-src" src="egg_waiting.mp4" type="video/mp4">
+                <source id="video-src" src="videosegg_waiting.mp4" type="video/mp4">
             </video>
         </div>
         <h3 id="display-name" style="margin: 5px 0;"></h3>
@@ -282,15 +282,15 @@
         const diary = document.getElementById('diary-text');
 
         if (currentLv >= 2 && currentLv < 8) {
-            if(!source.src.includes("egg_hatch.mp4")) {
-                source.src = "egg_hatch.mp4";
+            if(!source.src.includes("videosegg_hatch.mp4.mp4")) {
+                source.src = "videosegg_hatch.mp4.mp4";
                 status.innerText = "狀態：剛破殼的幼龜";
                 diary.innerText = "太棒了！小龜順利破殼，正努力游向大海！";
                 video.load(); video.play();
             }
         } else if (currentLv >= 8) {
-            if(!source.src.includes("sea_swimming.mp4")) {
-                source.src = "sea_swimming.mp4";
+            if(!source.src.includes("videossea_swimming.mp4")) {
+                source.src = "videossea_swimming.mp4";
                 status.innerText = "狀態：在海洋中茁壯";
                 diary.innerText = "小龜已在大海成長。完成挑戰即可領取獎勵！";
                 video.load(); video.play();
