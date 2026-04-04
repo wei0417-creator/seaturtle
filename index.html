@@ -65,18 +65,18 @@
             border-left: 5px solid #00796b;
         }
 
-        /* 問答視窗樣式 */
-        #quiz-overlay {
+        /* 彈窗通用樣式 */
+        #quiz-overlay, #reward-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             z-index: 1000;
             justify-content: center;
             align-items: center;
         }
 
-        .quiz-box {
+        .modal-box {
             width: 85%;
             max-width: 400px;
             background: white;
@@ -86,6 +86,7 @@
         }
 
         #game-ui { display: none; }
+        .progress-bar { color: #00796b; font-weight: bold; font-size: 0.9em; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -115,7 +116,7 @@
 
         <div id="action-buttons">
             <button onclick="doTask('巡視沙灘', 1)">🔦 完成沙灘巡視 (Exp+1)</button>
-            <button onclick="openQuiz()" style="background: linear-gradient(135deg, #ffa000, #ff6f00);">❓ 守護者知識挑戰 (Exp+2)</button>
+            <button id="quiz-btn" onclick="openQuiz()" style="background: linear-gradient(135deg, #ffa000, #ff6f00);">❓ 知識挑戰 (進度 0/8)</button>
         </div>
 
         <div class="diary-entry">
@@ -126,19 +127,30 @@
 </div>
 
 <div id="quiz-overlay">
-    <div class="quiz-box">
-        <h3 id="quiz-question" style="color: #00796b;">題目載入中...</h3>
+    <div class="modal-box">
+        <div id="quiz-progress" class="progress-bar">進度：0 / 8</div>
+        <h3 id="quiz-question" style="color: #00796b; margin-top: 0;">題目載入中...</h3>
         <div id="quiz-options"></div>
         <button onclick="closeQuiz()" style="background: #999; margin-top: 15px;">暫時關閉</button>
     </div>
 </div>
 
+<div id="reward-overlay">
+    <div class="modal-box" style="text-align: center;">
+        <h2 style="color: #d32f2f;">🎉 恭喜達成！</h2>
+        <p>你已完成 8 項保育知識挑戰，成為一名合格的「望安海龜守護者」。</p>
+        <div style="font-size: 50px; margin: 20px 0;">🎁</div>
+        <p>請將此畫面出示給服務台人員<br>即可領取或參加對獎！</p>
+        <button onclick="closeReward()" style="background: #d32f2f;">確定</button>
+    </div>
+</div>
+
 <script>
-    const gasUrl = "您的GAS網址"; // <--- 請填入您的網址
+    const gasUrl = "您的GAS網址"; 
     let myId = "";
     let currentLv = 0;
+    let quizCount = 0; // 紀錄答題次數
 
-    // 10 題庫
     const quizData = [
         { q: "望安沙灘上，決定海龜寶寶性別的主要因素？", o: ["沙灘的溫度", "海水鹽度", "蛋的大小"], c: 0, r: "較溫暖的沙窩通常會孵出雌性！" },
         { q: "小海龜破殼後靠什麼尋找大海方向？", o: ["海水氣味", "海面反光", "母龜呼喚"], c: 1, r: "小龜有趨光性，會朝向較亮的海平面。" },
@@ -155,11 +167,9 @@
     function startAdoption() {
         const audio = document.getElementById('bg-music');
         if(audio) { audio.volume = 0.5; audio.play().catch(e => {}); }
-
         const name = document.getElementById('turtleName').value;
         if(!name) return alert("請輸入名字");
         myId = "T" + new Date().getTime();
-
         fetch(`${gasUrl}?action=adopt&name=${encodeURIComponent(name)}&species=海龜蛋`, { mode: 'no-cors' })
         .then(() => {
             document.getElementById('display-name').innerText = name + " 的成長紀錄";
@@ -169,10 +179,14 @@
         });
     }
 
-    // 問答功能
     function openQuiz() {
+        if(quizCount >= 8) {
+            showReward();
+            return;
+        }
         const rand = Math.floor(Math.random() * quizData.length);
         const q = quizData[rand];
+        document.getElementById('quiz-progress').innerText = `進度：${quizCount} / 8`;
         document.getElementById('quiz-question').innerText = q.q;
         const optionsDiv = document.getElementById('quiz-options');
         optionsDiv.innerHTML = "";
@@ -180,24 +194,38 @@
         q.o.forEach((opt, index) => {
             const btn = document.createElement('button');
             btn.innerText = opt;
-            btn.style.background = "#e0f2f1";
-            btn.style.color = "#004d40";
-            btn.style.boxShadow = "none";
+            btn.style.background = "#e0f2f1"; btn.style.color = "#004d40"; btn.style.boxShadow = "none";
             btn.onclick = () => {
+                quizCount++;
                 if(index === q.c) {
                     alert("答對了！Exp + 2\n知識點：" + q.r);
                     doTask("知識挑戰成功", 2);
                 } else {
-                    alert("好可惜答錯了，再試試看！\n正確答案小知識：" + q.r);
+                    alert("好可惜答錯了，但學習也是一種守護！\n正確小知識：" + q.r);
+                    doTask("知識挑戰練習", 1);
                 }
+                updateQuizButton();
                 closeQuiz();
+                if(quizCount >= 8) showReward();
             };
             optionsDiv.appendChild(btn);
         });
         document.getElementById('quiz-overlay').style.display = 'flex';
     }
 
+    function updateQuizButton() {
+        const btn = document.getElementById('quiz-btn');
+        if(quizCount >= 8) {
+            btn.innerText = "🎁 領取守護者獎勵";
+            btn.style.background = "linear-gradient(135deg, #d32f2f, #b71c1c)";
+        } else {
+            btn.innerText = `❓ 知識挑戰 (進度 ${quizCount}/8)`;
+        }
+    }
+
     function closeQuiz() { document.getElementById('quiz-overlay').style.display = 'none'; }
+    function showReward() { document.getElementById('reward-overlay').style.display = 'flex'; }
+    function closeReward() { document.getElementById('reward-overlay').style.display = 'none'; }
 
     function doTask(taskName, points) {
         currentLv += points;
@@ -212,23 +240,18 @@
         const diary = document.getElementById('diary-text');
         const btnArea = document.getElementById('action-buttons');
 
-        if (currentLv >= 2 && currentLv < 6) {
-            if(!source.src.includes("videosegg_hatch.mp4.mp4")) {
+        if (currentLv >= 2 && currentLv < 8) {
+            if(!source.src.includes("videosegg_hatch_mp4.mp4")) {
                 source.src = "videosegg_hatch.mp4.mp4";
                 status.innerText = "狀態：剛破殼的幼龜";
                 diary.innerText = "太棒了！小龜順利破殼而出，正努力游向大海了！";
-                btnArea.innerHTML = `
-                    <button onclick="doTask('划水運動', 1)">💪 體能挑戰：模擬划水 (Exp+1)</button>
-                    <button onclick="openQuiz()" style="background: linear-gradient(135deg, #ffa000, #ff6f00);">❓ 守護者知識挑戰 (Exp+2)</button>
-                `;
                 video.load(); video.play();
             }
-        } else if (currentLv >= 6) {
+        } else if (currentLv >= 8) {
             if(!source.src.includes("videossea_swimming.mp4")) {
                 source.src = "videossea_swimming.mp4";
                 status.innerText = "狀態：在海洋中茁壯";
-                diary.innerText = "小龜已經在大海裡自由自在地生活。謝謝你的守護，每天都要來看牠喔！";
-                btnArea.innerHTML = `<button onclick="openQuiz()" style="background: linear-gradient(135deg, #ffa000, #ff6f00);">❓ 學習更多保育知識 (Exp+2)</button>`;
+                diary.innerText = "小龜已經在大海裡自由自在地生活。謝謝你的守護！";
                 video.load(); video.play();
             }
         }
