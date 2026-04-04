@@ -82,7 +82,7 @@
     <div id="game-ui">
         <div class="video-container">
             <video id="main-video" width="100%" autoplay loop muted playsinline>
-                <source id="video-src" src="egg_waiting.mp4" type="video/mp4">
+                <source id="video-src" src="videosegg_waiting.mp4" type="video/mp4">
             </video>
         </div>
         
@@ -136,12 +136,12 @@
         const btnArea = document.getElementById('action-buttons');
 
         if (currentLv >= 2 && currentLv < 5) {
-            source.src = "egg_hatch.mp4";
+            source.src = "videosegg_hatch.mp4.mp4";
             status.innerText = "狀態：剛破殼的幼龜";
             diary.innerText = "太棒了！小龜順利破殼而出，努力游向大海了！";
             btnArea.innerHTML = '<button onclick="doTask(\'划水運動\', 1)">💪 體能挑戰：模擬划水 (成長中)</button>';
         } else if (currentLv >= 5) {
-            source.src = "sea_swimming.mp4";
+            source.src = "videossea_swimming.mp4";
             status.innerText = "狀態：在海洋中茁壯";
             diary.innerText = "小龜已經在大海裡自由自在地生活，期待牠長大回來。";
             btnArea.innerHTML = '<p>今日任務已達成，明天再來寫日記吧！</p>';
