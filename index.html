@@ -27,6 +27,7 @@
             padding: 25px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             text-align: center;
+            position: relative;
         }
 
         .video-container {
@@ -49,7 +50,10 @@
             width: 100%;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: 0.3s;
         }
+
+        button:active { transform: scale(0.95); }
 
         .diary-entry {
             background: rgba(224, 242, 241, 0.6);
@@ -59,6 +63,26 @@
             font-size: 14px;
             margin-top: 15px;
             border-left: 5px solid #00796b;
+        }
+
+        /* 問答視窗樣式 */
+        #quiz-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .quiz-box {
+            width: 85%;
+            max-width: 400px;
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            text-align: left;
         }
 
         #game-ui { display: none; }
@@ -90,8 +114,8 @@
         <p id="display-status" style="font-size: 14px; color: #555;">狀態：孵化中...</p>
 
         <div id="action-buttons">
-            <button onclick="doTask('巡視沙灘', 1)">🔦 完成沙灘巡視 (準備孵化)</button>
-            <button onclick="doTask('清理海廢', 1)">🚮 清理周邊垃圾 (準備孵化)</button>
+            <button onclick="doTask('巡視沙灘', 1)">🔦 完成沙灘巡視 (Exp+1)</button>
+            <button onclick="openQuiz()" style="background: linear-gradient(135deg, #ffa000, #ff6f00);">❓ 守護者知識挑戰 (Exp+2)</button>
         </div>
 
         <div class="diary-entry">
@@ -101,18 +125,36 @@
     </div>
 </div>
 
+<div id="quiz-overlay">
+    <div class="quiz-box">
+        <h3 id="quiz-question" style="color: #00796b;">題目載入中...</h3>
+        <div id="quiz-options"></div>
+        <button onclick="closeQuiz()" style="background: #999; margin-top: 15px;">暫時關閉</button>
+    </div>
+</div>
+
 <script>
-    const gasUrl = "https://script.google.com/macros/s/你的ID/exec"; // 請確保這是正確的 GAS 網址
+    const gasUrl = "您的GAS網址"; // <--- 請填入您的網址
     let myId = "";
     let currentLv = 0;
 
+    // 10 題庫
+    const quizData = [
+        { q: "望安沙灘上，決定海龜寶寶性別的主要因素？", o: ["沙灘的溫度", "海水鹽度", "蛋的大小"], c: 0, r: "較溫暖的沙窩通常會孵出雌性！" },
+        { q: "小海龜破殼後靠什麼尋找大海方向？", o: ["海水氣味", "海面反光", "母龜呼喚"], c: 1, r: "小龜有趨光性，會朝向較亮的海平面。" },
+        { q: "綠蠵龜之所以叫「綠」是因為哪個部位呈現綠色？", o: ["背甲顏色", "皮膚顏色", "脂肪顏色"], c: 2, r: "主食海藻海草，使其脂肪呈現綠色。" },
+        { q: "被廢棄漁網纏繞屬於哪種海洋威脅？", o: ["幽靈漁具", "過度捕撈", "優養化"], c: 0, r: "遺失漁具會持續在海中造成傷害。" },
+        { q: "海龜媽媽通常在什麼時候上岸產卵？", o: ["正午時分", "清晨", "深夜"], c: 2, r: "深夜環境安靜且隱蔽最安全。" },
+        { q: "小海龜發育成熟回到家鄉產卵約需幾年？", o: ["3至5年", "10年", "20至50年"], c: 2, r: "海龜成長緩慢，需要數十年才能成年。" },
+        { q: "海龜誤食塑膠袋的主因？", o: ["看起來像水母", "聞起來有香味", "口感很好"], c: 0, r: "漂浮的袋子視覺上與水母非常相似。" },
+        { q: "望安哪個沙灘是著名的產卵棲地保護區？", o: ["網垵口沙灘", "隘門沙灘", "山水沙灘"], c: 0, r: "網垵口是望安核心的保育沙灘。" },
+        { q: "發現受傷或擱淺的海龜應撥打？", o: ["119", "118", "110"], c: 1, r: "118 是海巡署的報案救援專線。" },
+        { q: "哪項行為對海龜最友善？", o: ["自備環保餐具", "餵食小海龜", "閃光燈拍照"], c: 0, r: "源頭減塑是每個人都能做的保育！" }
+    ];
+
     function startAdoption() {
-        // 啟動背景音樂
         const audio = document.getElementById('bg-music');
-        if(audio) {
-            audio.volume = 0.5;
-            audio.play().catch(e => console.log("音樂播放被瀏覽器阻擋"));
-        }
+        if(audio) { audio.volume = 0.5; audio.play().catch(e => {}); }
 
         const name = document.getElementById('turtleName').value;
         if(!name) return alert("請輸入名字");
@@ -123,18 +165,44 @@
             document.getElementById('display-name').innerText = name + " 的成長紀錄";
             document.getElementById('adopt-ui').style.display = 'none';
             document.getElementById('game-ui').style.display = 'block';
-            // 確保第一段影片開始播放
             document.getElementById('main-video').play();
         });
     }
 
+    // 問答功能
+    function openQuiz() {
+        const rand = Math.floor(Math.random() * quizData.length);
+        const q = quizData[rand];
+        document.getElementById('quiz-question').innerText = q.q;
+        const optionsDiv = document.getElementById('quiz-options');
+        optionsDiv.innerHTML = "";
+        
+        q.o.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.innerText = opt;
+            btn.style.background = "#e0f2f1";
+            btn.style.color = "#004d40";
+            btn.style.boxShadow = "none";
+            btn.onclick = () => {
+                if(index === q.c) {
+                    alert("答對了！Exp + 2\n知識點：" + q.r);
+                    doTask("知識挑戰成功", 2);
+                } else {
+                    alert("好可惜答錯了，再試試看！\n正確答案小知識：" + q.r);
+                }
+                closeQuiz();
+            };
+            optionsDiv.appendChild(btn);
+        });
+        document.getElementById('quiz-overlay').style.display = 'flex';
+    }
+
+    function closeQuiz() { document.getElementById('quiz-overlay').style.display = 'none'; }
+
     function doTask(taskName, points) {
         currentLv += points;
         fetch(`${gasUrl}?action=update&id=${myId}&task=${encodeURIComponent(taskName)}`, { mode: 'no-cors' })
-        .then(() => {
-            updateUI();
-            alert("任務完成：" + taskName);
-        });
+        .then(() => updateUI());
     }
 
     function updateUI() {
@@ -144,21 +212,25 @@
         const diary = document.getElementById('diary-text');
         const btnArea = document.getElementById('action-buttons');
 
-        // 判斷等級切換影片與文字
-        if (currentLv >= 2 && currentLv < 5) {
-            source.src = "videosegg_hatch.mp4.mp4";
-            status.innerText = "狀態：剛破殼的幼龜";
-            diary.innerText = "太棒了！小龜順利破殼而出，努力游向大海了！";
-            btnArea.innerHTML = '<button onclick="doTask(\'划水運動\', 1)">💪 體能挑戰：模擬划水 (成長中)</button>';
-            video.load();
-            video.play();
-        } else if (currentLv >= 5) {
-            source.src = "videossea_swimming.mp4";
-            status.innerText = "狀態：在海洋中茁壯";
-            diary.innerText = "小龜已經在大海裡自由自在地生活，期待牠長大回來。";
-            btnArea.innerHTML = '<p>今日任務已達成，明天再來寫日記吧！</p>';
-            video.load();
-            video.play();
+        if (currentLv >= 2 && currentLv < 6) {
+            if(!source.src.includes("videosegg_hatch.mp4.mp4")) {
+                source.src = "videosegg_hatch.mp4.mp4";
+                status.innerText = "狀態：剛破殼的幼龜";
+                diary.innerText = "太棒了！小龜順利破殼而出，正努力游向大海了！";
+                btnArea.innerHTML = `
+                    <button onclick="doTask('划水運動', 1)">💪 體能挑戰：模擬划水 (Exp+1)</button>
+                    <button onclick="openQuiz()" style="background: linear-gradient(135deg, #ffa000, #ff6f00);">❓ 守護者知識挑戰 (Exp+2)</button>
+                `;
+                video.load(); video.play();
+            }
+        } else if (currentLv >= 6) {
+            if(!source.src.includes("videossea_swimming.mp4")) {
+                source.src = "videossea_swimming.mp4";
+                status.innerText = "狀態：在海洋中茁壯";
+                diary.innerText = "小龜已經在大海裡自由自在地生活。謝謝你的守護，每天都要來看牠喔！";
+                btnArea.innerHTML = `<button onclick="openQuiz()" style="background: linear-gradient(135deg, #ffa000, #ff6f00);">❓ 學習更多保育知識 (Exp+2)</button>`;
+                video.load(); video.play();
+            }
         }
     }
 </script>
