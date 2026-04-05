@@ -5,29 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>望安守護者：海龜成長日記</title>
     <style>
-        /* 全域樣式 */
-        body { font-family: 'Microsoft JhengHei', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; background-color: #000; }
+        /* 全域樣式：互動面板靠左 */
+        body { 
+            font-family: 'Microsoft JhengHei', sans-serif; 
+            margin: 0; display: flex; justify-content: flex-start; align-items: center; 
+            min-height: 100vh; overflow: hidden; background-color: #000; padding-left: 3%; 
+        }
         
-        /* 基礎背景圖 (首頁與第一站使用) */
+        /* 背景層 */
         .base-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url('wangan_bg.jpg'); background-size: cover; background-position: center; z-index: -2; transition: opacity 1s; }
-
-        /* 第二站專用：風景輪播影片層 */
         #video-carousel-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; display: none; opacity: 0; transition: opacity 1.5s; }
         #carousel-video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.7); }
 
-        .glass-card { width: 90%; max-width: 420px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); border-radius: 30px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); text-align: center; z-index: 10; position: relative; }
+        /* 左側玻璃面板 */
+        .glass-card { 
+            width: 90%; max-width: 380px; background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(15px); border-radius: 30px; padding: 20px; 
+            box-shadow: 10px 0 30px rgba(0,0,0,0.3); text-align: center; z-index: 10; 
+            border: 1px solid rgba(255,255,255,0.3); max-height: 95vh; overflow-y: auto;
+        }
 
-        /* 首頁背景 (保育中心) */
-        #landing-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url('wangan_center.jpg'); background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        /* 首頁覆蓋層 */
+        #landing-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url('wangan_center.jpg'); background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; z-index: 2000; transition: opacity 0.8s; }
         
-        .stele-img { width: 100%; border-radius: 15px; margin: 10px 0; border: 2px solid #b71c1c; }
-        #main-game-container { display: none; }
-        .video-container { width: 100%; border-radius: 20px; overflow: hidden; margin: 15px 0; background: #000; }
-        button { background: linear-gradient(135deg, #00796b, #004d40); color: white; border: none; padding: 14px; border-radius: 15px; font-size: 17px; width: 100%; cursor: pointer; font-weight: bold; margin: 8px 0; transition: 0.3s; }
-        .instruction-box { margin-top: 10px; padding: 10px; background: #fff9c4; border-radius: 10px; font-weight: bold; color: #f57f17; border: 1px dashed #f57f17; }
+        /* 石碑照片樣式 */
+        .stele-img { 
+            width: 100%; border-radius: 15px; margin: 10px 0; 
+            border: 3px solid #b71c1c; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
 
+        .video-container { width: 100%; border-radius: 15px; overflow: hidden; margin: 10px 0; background: #000; line-height: 0; }
+        button { background: linear-gradient(135deg, #00796b, #004d40); color: white; border: none; padding: 12px; border-radius: 15px; font-size: 16px; width: 100%; cursor: pointer; font-weight: bold; margin: 6px 0; transition: 0.3s; }
+        button:disabled { background: #bbb; cursor: not-allowed; }
+        
+        .diary-entry { background: rgba(224, 242, 241, 0.7); padding: 12px; border-radius: 15px; text-align: left; font-size: 14px; margin-top: 10px; border-left: 5px solid #00796b; }
+        .instruction-box { margin-top: 10px; padding: 8px; background: #fff9c4; border-radius: 10px; font-weight: bold; color: #f57f17; border: 1px dashed #f57f17; font-size: 14px; }
+        
         #quiz-overlay, #reward-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; justify-content: center; align-items: center; }
         .modal-box { width: 85%; max-width: 400px; background: white; padding: 25px; border-radius: 25px; text-align: center; }
+        #lottery-result { font-size: 26px; font-weight: bold; color: #d32f2f; margin: 15px 0; }
+        .rolling { animation: flash 0.1s infinite; }
+        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     </style>
 </head>
 <body>
@@ -40,22 +58,24 @@
 </div>
 
 <div id="landing-overlay">
-    <div class="glass-card">
+    <div class="glass-card" style="margin-left: 0; max-width: 420px;"> 
         <h2 style="color: #004d40;">🌊 歡迎來到<br>望安綠蠵龜觀光保育中心</h2>
         <button onclick="enterApp()">開始守護之旅</button>
     </div>
 </div>
 
-<div id="main-game-container" class="glass-card">
-    <h2 style="color: #004d40; margin: 0;">🐢 海龜守護日記</h2>
+<div id="main-game-container" class="glass-card" style="display:none; opacity: 0;">
+    <h2 style="color: #004d40; margin: 0; font-size: 20px;">🐢 海龜守護日記</h2>
 
     <div id="adopt-ui">
         <div style="text-align: left; margin-bottom: 10px;">
-            <h3 style="color: #b71c1c; margin: 5px 0;">🗿 第一站：鎮館之寶</h3>
+            <h3 style="color: #b71c1c; margin: 10px 0;">🗿 第一站：鎮館之寶</h3>
             <img src="stele.webp" alt="好善堂石碑" class="stele-img">
-            <p style="font-size: 14px; color: #444;">為認養的海龜蛋命名，延續保育精神：</p>
+            <p style="font-size: 13px; color: #444; line-height: 1.5;">
+                這份光緒六年的保育誓約，今日由你接棒！請為認養的海龜蛋命名：
+            </p>
         </div>
-        <input type="text" id="turtleName" placeholder="例如：小望" style="width:85%; padding:12px; border-radius:12px; border:1px solid #ccc;"><br><br>
+        <input type="text" id="turtleName" placeholder="例如：小望" style="width:88%; padding:12px; border-radius:10px; border:1px solid #ccc;"><br><br>
         <button onclick="startAdoption()" style="background: #b71c1c;">📜 簽署守護誓約</button>
     </div>
 
@@ -67,10 +87,13 @@
         </div>
         <h3 id="display-name" style="margin: 5px 0;"></h3>
         <p id="display-status">狀態：孵化中...</p>
+        
         <div id="action-buttons">
             <button id="step2-btn" onclick="startStep2()">第二站：望安風景分享 (Exp+1)</button>
             <button id="quiz-btn" onclick="openQuiz()" style="background: linear-gradient(135deg, #ffa000, #ff6f00);">❓ 知識挑戰 (0/8)</button>
         </div>
+        
+        <div class="diary-entry"><strong>📖 守護日誌</strong><br><span id="diary-text">今天在望安巡視...</span></div>
         <div class="instruction-box" id="instruction-box">📍 契約已成！請帶小龜前往下一站。</div>
     </div>
 </div>
@@ -83,39 +106,40 @@
     let myId = "";
     let currentLv = 0;
     let quizCount = 0;
-
-    // 第二站背景輪播影片清單
     const landscapeVideos = ["sunrise.mp4", "nightview.mp4", "tiantaishan.mp4", "monsoon.mp4"];
     let currentVideoIdx = 0;
 
     function enterApp() {
-        document.getElementById('landing-overlay').style.display = 'none';
-        document.getElementById('main-game-container').style.display = 'block';
+        const landing = document.getElementById('landing-overlay');
+        const game = document.getElementById('main-game-container');
+        landing.style.opacity = '0';
+        setTimeout(() => {
+            landing.style.display = 'none';
+            game.style.display = 'block';
+            setTimeout(() => game.style.opacity = '1', 50);
+        }, 800);
         const audio = document.getElementById('bg-music');
         if(audio) { audio.volume = 0.4; audio.play().catch(e => {}); }
     }
 
     function startAdoption() {
-        const name = document.getElementById('turtleName').value || "守護者";
+        const nameInput = document.getElementById('turtleName');
+        const name = nameInput.value || "守護者";
         myId = "T" + new Date().getTime();
         fetch(`${gasUrl}?action=adopt&id=${myId}&name=${encodeURIComponent(name)}&species=好善堂蛋窩`, { mode: 'no-cors' })
         .then(() => {
-            document.getElementById('display-name').innerText = name + " 的成長日記";
+            document.getElementById('display-name').innerText = name + " 的日記";
             document.getElementById('adopt-ui').style.display = 'none';
             document.getElementById('game-ui').style.display = 'block';
             updateInstruction("第二站：望安風景分享區");
         });
     }
 
-    // 第二站啟動：開始背景輪播
     function startStep2() {
         doTask('望安風景分享', 1);
         const videoLayer = document.getElementById('video-carousel-bg');
-        const carouselVideo = document.getElementById('carousel-video');
-        
         videoLayer.style.display = 'block';
         setTimeout(() => videoLayer.style.opacity = '1', 50);
-        
         playNextLandscape();
         updateInstruction("第三站：白子尋奇區");
         document.getElementById('step2-btn').disabled = true;
@@ -132,9 +156,7 @@
         };
     }
 
-    function updateInstruction(target) {
-        document.getElementById('instruction-box').innerText = `📍 任務達成！請前往：${target}`;
-    }
+    function updateInstruction(target) { document.getElementById('instruction-box').innerText = `📍 任務達成！請前往：${target}`; }
 
     function doTask(taskName, points) {
         if (!myId) return;
@@ -142,12 +164,12 @@
         fetch(`${gasUrl}?action=update&id=${myId}&task=${encodeURIComponent(taskName)}`, { mode: 'no-cors' }).then(() => updateUI());
     }
 
-    // 測驗與抽獎邏輯 (與先前一致)
+    // 測驗與抽獎邏輯
     const quizData = [
         { q: "決定海龜性別的因素？", o: ["沙灘溫度", "海水鹽度", "蛋的大小"], c: 0 },
         { q: "小海龜破殼後靠什麼找大海？", o: ["海水氣味", "海面反光", "母龜呼喚"], c: 1 },
         { q: "綠蠵龜脂肪呈綠色是因為主食？", o: ["海藻海草", "水母", "小魚"], c: 0 },
-        { q: "遺失漁具持續傷害海洋稱為？", o: ["幽靈漁具", "過度捕撈", "海洋廢棄物"], c: 0 },
+        { q: "被遺棄漁網持續傷害海洋稱為？", o: ["幽靈漁具", "過度捕撈", "海洋廢物"], c: 0 },
         { q: "海龜媽媽通常何時產卵？", o: ["正午", "清晨", "深夜"], c: 2 },
         { q: "海龜成熟需多久？", o: ["3-5年", "10年", "20-50年"], c: 2 },
         { q: "海龜為何誤食塑膠袋？", o: ["像水母", "很香", "口感好"], c: 0 },
@@ -184,15 +206,28 @@
         btn.disabled = true; btn.innerText = "抽取中..."; res.classList.add('rolling');
         let count = 0;
         let timer = setInterval(() => {
-            res.innerText = ["獎項A", "獎項B", "獎項C"][Math.floor(Math.random() * 3)];
+            res.innerText = ["九折券", "棒棒糖", "飲料"][Math.floor(Math.random() * 3)];
             if (++count > 25) {
                 clearInterval(timer); res.classList.remove('rolling');
-                const prize = ["海龜棒棒糖", "飲料", "九折券"][Math.floor(Math.random() * 3)];
+                const prize = ["海龜棒棒糖", "九折券", "飲料一罐", "環保杯", "50元折抵券"][Math.floor(Math.random() * 5)];
                 res.innerText = "🎉 " + prize + " 🎉";
                 btn.style.display = "none"; document.getElementById('redeem-hint').style.display = "block";
-                fetch(`${gasUrl}?action=update&id=${myId}&task=${encodeURIComponent("抽中獎項:" + prize)}`, { mode: 'no-cors' });
+                fetch(`${gasUrl}?action=update&id=${myId}&task=${encodeURIComponent("抽中獎項:" + prize)}`, { mode: 'no-cors' })
+                .then(() => setTimeout(() => { document.getElementById('reward-overlay').style.display = 'none'; showFinalEnding(); }, 4000));
             }
         }, 100);
+    }
+
+    function showFinalEnding() {
+        document.getElementById('display-status').innerText = "狀態：任務達成";
+        document.getElementById('game-ui').innerHTML = "<div style='background:rgba(255,255,255,0.7); padding:20px; border-radius:20px;'><h3>🌊 守護任務達成！</h3><p>謝謝你幫助小龜回到大海。請記得向服務台領獎，我們大海見！</p></div>";
+        document.getElementById('instruction-box').style.display = "none";
+    }
+
+    function updateQuizButton() {
+        const btn = document.getElementById('quiz-btn');
+        if(quizCount >= 8) { btn.innerText = "🎁 領取獎項"; btn.style.background = "linear-gradient(135deg, #d32f2f, #b71c1c)"; }
+        else { btn.innerText = `❓ 知識挑戰 (${quizCount}/8)`; }
     }
 
     function updateUI() {
@@ -207,11 +242,6 @@
 
     function closeQuiz() { document.getElementById('quiz-overlay').style.display = 'none'; }
     function showReward() { document.getElementById('reward-overlay').style.display = 'flex'; }
-    function updateQuizButton() {
-        const btn = document.getElementById('quiz-btn');
-        if(quizCount >= 8) { btn.innerText = "🎁 領取獎項"; btn.style.background = "linear-gradient(135deg, #d32f2f, #b71c1c)"; }
-        else { btn.innerText = `❓ 知識挑戰 (${quizCount}/8)`; }
-    }
 </script>
 
 </body>
