@@ -211,10 +211,10 @@
         btn.disabled = true; btn.innerText = "抽取中..."; res.classList.add('rolling');
         let count = 0;
         let timer = setInterval(() => {
-            res.innerText = ["棒棒糖", "九折券", "海龜黑咖啡"][Math.floor(Math.random() * 3)];
+            res.innerText = ["棒棒糖", "九折券", "仙人掌冰棒"][Math.floor(Math.random() * 3)];
             if (++count > 25) {
                 clearInterval(timer); res.classList.remove('rolling');
-                const prize = ["海龜棒棒糖", "九折券", "飲料一罐", "海龜黑咖啡一杯", "50元折抵券(消費金額須達300)"][Math.floor(Math.random() * 5)];
+                const prize = ["海龜棒棒糖", "九折券", "仙人掌冰棒一隻", "50元折抵券(消費金額須達300)"][Math.floor(Math.random() * 5)];
                 res.innerText = "🎉 " + prize + " 🎉";
                 btn.style.display = "none"; document.getElementById('redeem-hint').style.display = "block";
                 fetch(`${gasUrl}?action=update&id=${myId}&task=${encodeURIComponent("抽中獎項:" + prize)}`, { mode: 'no-cors' })
